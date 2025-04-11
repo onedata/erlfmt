@@ -1319,7 +1319,7 @@ snapshot_range_partial_two_forms(_) ->
         "z()   ->  2.\n",
     % Only x() and y() should be touched.
     Reference =
-        "x() -> 0.\n"
+        "x() -> 0.\n\n\n"
         "y() -> 1.\n"
         "z()   ->  2.\n",
     Result = erlfmt:format_string_range(Original, {1, 1}, {2, 11}, []),

@@ -32,6 +32,7 @@
 
 foo() -> ?FOO.
 
+
 bar() -> ?BAR.
 
 % no empty lines around "if"-like attributes

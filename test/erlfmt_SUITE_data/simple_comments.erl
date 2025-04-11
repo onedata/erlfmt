@@ -45,6 +45,7 @@ foo() ->
         [call(), 'case'(), 'receive'(), 'if'(), 'try'(), 'fun'()]
     ].
 
+
 %% comment
 baz(Y) when
     is_list(Y);
@@ -52,6 +53,7 @@ baz(Y) when
     is_binary(Y)
 ->
     ok.
+
 
 foobar() ->
     %% comment 1
@@ -62,6 +64,7 @@ foobar() ->
         2
         %% comment 4
     ].
+
 
 map(M) ->
     #{
@@ -75,6 +78,7 @@ map(M) ->
             }
         %% comment 4
     }.
+
 
 record(R) ->
     #foo{
@@ -94,6 +98,7 @@ record(R) ->
         %% comment 4
     }.
 
+
 binary() ->
     <<
         %% comment 1
@@ -102,6 +107,7 @@ binary() ->
             2)/binary
         %% comment 3
     >>.
+
 
 comprehension() ->
     [
@@ -117,6 +123,7 @@ comprehension() ->
             ]
         %% comment 5
     ].
+
 
 call() ->
     %% comment 1
@@ -134,6 +141,7 @@ call() ->
         %% comment 6
     ).
 
+
 'case'() ->
     %% comment 1
     case
@@ -148,6 +156,7 @@ call() ->
             ok
         %% comment 5
     end.
+
 
 'receive'() ->
     %% comment 1
@@ -167,6 +176,7 @@ call() ->
         %% comment 7
     end.
 
+
 'if'() ->
     %% comment 1
     if
@@ -176,6 +186,7 @@ call() ->
             ok
         %% comment 4
     end.
+
 
 'try'() ->
     %% comment 1
@@ -194,6 +205,7 @@ call() ->
         'after'
         %% comment 7
     end.
+
 
 'fun'() ->
     %% comment 1

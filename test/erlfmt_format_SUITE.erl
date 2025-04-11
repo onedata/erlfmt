@@ -3650,11 +3650,18 @@ ifdef(Config) when is_list(Config) ->
         "-endif.\n"
     ),
     %% preserves no empty line before endif
-    ?assertSame(
+    ?assertFormat(
         "-ifdef(TEST).\n"
         "start(_StartType, _StartArgs) ->\n"
         "    mylib_sup:start_link().\n"
         "\n"
+        "stop(_State) ->\n"
+        "    ok.\n"
+        "-endif().\n",
+        "-ifdef(TEST).\n"
+        "start(_StartType, _StartArgs) ->\n"
+        "    mylib_sup:start_link().\n"
+        "\n\n"
         "stop(_State) ->\n"
         "    ok.\n"
         "-endif().\n"
@@ -4419,6 +4426,15 @@ doc_attributes(Config) when is_list(Config) ->
 
 doc_macros(Config) when is_list(Config) ->
     %% Doc Attributes as macros is a common pattern for OTP < 27 compatibility.
-    ?assertSame("?MODULEDOC(\"Test\").\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n"),
-    ?assertSame("?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\ntest() -> ok.\n"),
-    ?assertSame("?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n").
+    ?assertFormat(
+        "?MODULEDOC(\"Test\").\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n",
+        "?MODULEDOC(\"Test\").\n\n\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n"
+    ),
+    ?assertFormat(
+        "?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\ntest() -> ok.\n",
+        "?DOC(\"Test\").\n\n\n?DOC(#{since => <<\"1.0.0\">>}).\n\n\ntest() -> ok.\n"
+    ),
+    ?assertFormat(
+        "?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n",
+        "?DOC(\"Test\").\n\n\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n"
+    ).

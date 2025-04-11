@@ -31,6 +31,7 @@ has_fanciness([Cp | Rest]) ->
 has_fanciness([]) ->
     false.
 
+
 %% comment
 bar(X) when
     is_list(X)
@@ -39,6 +40,7 @@ bar(X) when
 %% comment
 bar(X) when is_atom(X) ->
     ok.
+
 
 baz(Y) when
     %% comment

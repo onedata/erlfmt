@@ -268,6 +268,7 @@ reverse_lookup(two) -> 2.
 lookup(1) -> one;
 lookup(2) -> two.
 
+
 reverse_lookup(one) ->
     1;
 reverse_lookup(two) ->

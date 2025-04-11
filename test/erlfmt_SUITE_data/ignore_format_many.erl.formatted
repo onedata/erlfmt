@@ -43,5 +43,6 @@ g() -> ok. % this is also ok
 % blah
 h() -> ok.
 
+
 %% TODO write emit
 emit(S) -> ok.
