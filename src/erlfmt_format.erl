@@ -37,6 +37,7 @@
     line/0,
     line/1,
     line/2,
+    line/3,
     concat/1,
     concat/2,
     concat/3,
@@ -772,9 +773,17 @@ clauses_to_algebra([Clause | _] = Clauses) ->
 
 fold_clauses_to_algebra([Clause]) ->
     clause_expr_to_algebra(Clause);
-fold_clauses_to_algebra([Clause | Clauses]) ->
+fold_clauses_to_algebra([Clause | Clauses] = AllClauses) ->
     ClauseD = clause_expr_to_algebra(Clause),
-    line(concat(ClauseD, <<";">>), fold_clauses_to_algebra(Clauses)).
+    LineBreakCount = infer_clauses_line_break_count(AllClauses),
+    line(concat(ClauseD, <<";">>), fold_clauses_to_algebra(Clauses), LineBreakCount).
+
+infer_clauses_line_break_count([ClauseA, ClauseB | _]) ->
+    OriginalLineBreak = erlfmt_scan:get_line(ClauseB) - erlfmt_scan:get_end_line(ClauseA),
+    if
+        OriginalLineBreak =< 1 -> 1;
+        OriginalLineBreak >= 2 -> 2
+    end.
 
 clause_has_break({clause, _Meta, empty, Guards, [Body | _]}) ->
     has_break_between(Guards, Body);
