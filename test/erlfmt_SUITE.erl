@@ -70,6 +70,7 @@
     snapshot_ignore_format_many/1,
     snapshot_ignore_format_old/1,
     snapshot_ignore_format_many_old/1,
+    snapshot_onedata/1,
     snapshot_empty/1,
     format_string_unicode/1,
     error_ignore_begin_ignore/1,
@@ -178,6 +179,7 @@ groups() ->
             snapshot_ignore_format_many,
             snapshot_ignore_format_old,
             snapshot_ignore_format_many_old,
+            snapshot_onedata,
             snapshot_empty,
             format_string_unicode,
             {group, otp_27_snapshot_tests}
@@ -1105,6 +1107,8 @@ snapshot_ignore_format_many(Config) -> snapshot_formatted("ignore_format_many.er
 snapshot_ignore_format_old(Config) -> snapshot_formatted("ignore_format_old.erl", Config).
 
 snapshot_ignore_format_many_old(Config) -> snapshot_formatted("ignore_format_many_old.erl", Config).
+
+snapshot_onedata(Config) -> snapshot_formatted("onedata.erl", Config).
 
 snapshot_empty(Config) -> snapshot_same("empty.erl", Config).
 
