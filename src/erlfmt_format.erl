@@ -622,7 +622,8 @@ break_fun(_) -> fun erlfmt_algebra:break/2.
 map_inner_values(_LastFitsFun, []) ->
     [];
 map_inner_values(_LastFitsFun, [{comment, _, _} = FirstComment | _] = Comments) ->
-    [{FirstComment, comments_to_algebra(Comments)}];
+    {CommentsD, _, _} = comments_to_algebra(Comments),
+    [{FirstComment, CommentsD}];
 map_inner_values(LastFitsFun, [Value]) ->
     [{Value, LastFitsFun(expr_to_algebra(Value), enabled)}];
 map_inner_values(Last, [Value | Values]) ->
@@ -979,34 +980,72 @@ combine_comments_with_dot(Meta, Doc) ->
 combine_pre_dot_comments([], Doc) ->
     concat(Doc, <<".">>);
 combine_pre_dot_comments(Comments, Doc) ->
-    concat([Doc, line(), comments_to_algebra(Comments), line(), <<".">>]).
+    {CommentsD, _, _} = comments_to_algebra(Comments),
+    concat([Doc, line(), CommentsD, line(), <<".">>]).
 
 combine_pre_comments([], _Meta, Doc) ->
     Doc;
 combine_pre_comments(Comments, Meta, Doc) ->
-    case
-        erlfmt_scan:get_end_line(lists:last(Comments)) + 1 <
-            erlfmt_scan:get_inner_line(Meta)
-    of
-        true -> concat(comments_to_algebra(Comments), line(2), Doc);
-        false -> concat(comments_to_algebra(Comments), line(), Doc)
+    case comments_to_algebra(Comments) of
+        {CommentsD, _, true} ->
+            % Enforce 2nl between section header and next expression
+            concat(CommentsD, line(3), Doc);
+        {CommentsD, _, _} ->
+            case
+                erlfmt_scan:get_end_line(lists:last(Comments)) + 1 <
+                    erlfmt_scan:get_inner_line(Meta)
+            of
+                true -> concat(CommentsD, line(2), Doc);
+                false -> concat(CommentsD, line(), Doc)
+            end
     end.
 
 combine_post_comments([], _Meta, Doc) ->
     Doc;
 combine_post_comments([Comment | _] = Comments, Meta, Doc) ->
+    {CommentsD, _, _} = comments_to_algebra(Comments),
     case erlfmt_scan:get_inner_end_line(Meta) + 1 < erlfmt_scan:get_line(Comment) of
-        true -> concat(Doc, line(2), comments_to_algebra(Comments));
-        false -> concat(Doc, line(), comments_to_algebra(Comments))
+        true -> concat(Doc, line(2), CommentsD);
+        false -> concat(Doc, line(), CommentsD)
     end.
 
 comments_to_algebra(Comments) ->
-    CommentsD = lists:map(fun comment_to_algebra/1, Comments),
-    fold_doc(fun(C, Acc) -> concat(C, line(2), Acc) end, CommentsD).
+    CommentsCount = length(Comments),
+
+    {CommentsD, AreSectionsComments} = lists:unzip(lists:map(fun({Idx, Comment}) ->
+        IsSectionComment = is_section_comment(Comment),
+
+        CommentD = comment_to_algebra(Comment),
+        CommentD2 = case IsSectionComment andalso Idx > 1 of
+            true -> concat(line(), CommentD);
+            false -> CommentD
+        end,
+        CommentD3 = case IsSectionComment andalso Idx < CommentsCount of
+            true -> concat(CommentD2, line());
+            false -> CommentD2
+        end,
+
+        {CommentD3, IsSectionComment}
+    end, lists:enumerate(Comments))),
+
+    IsFirstCommentSectionComment = hd(AreSectionsComments),
+    IsLastCommentSectionComment = lists:last(AreSectionsComments),
+
+    {
+        fold_doc(fun(C, Acc) -> concat(C, line(2), Acc) end, CommentsD),
+        IsFirstCommentSectionComment,
+        IsLastCommentSectionComment
+    }.
 
 comment_to_algebra({comment, _Meta, Lines}) ->
     LinesD = lists:map(fun erlfmt_algebra:string/1, Lines),
     fold_doc(fun erlfmt_algebra:line/2, LinesD).
+
+is_section_comment({comment, _Meta, Lines}) ->
+    lists:any(fun
+        ("%%%================" ++ _) -> true;
+        (_) -> false
+    end, Lines).
 
 comments_with_pre_dot(Meta) ->
     {
