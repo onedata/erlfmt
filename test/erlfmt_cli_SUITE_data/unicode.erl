@@ -1,5 +1,6 @@
 -module(unicode).
 
+
 %% we read ahead by one form, so we need this to test properly read_rest with what follows
 second_form() -> "שלום עולם".
 

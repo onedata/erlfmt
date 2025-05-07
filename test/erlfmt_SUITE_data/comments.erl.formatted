@@ -16,6 +16,7 @@
 -define(VERSION_CHECK_INTERVAL_MILLIS_DEFAULT, 10000).
 -define(MAX_WRITE_FAILURES, 3).
 
+
 %% Cp stands for "codepoint"
 has_fanciness([Cp | Rest]) ->
     case wa_unicode:bidi_class(Cp) of

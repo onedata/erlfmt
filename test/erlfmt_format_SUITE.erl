@@ -3609,33 +3609,33 @@ exportimport(Config) when is_list(Config) ->
 ifdef(Config) when is_list(Config) ->
     %% preserves empty line after if, ifdef, ifndef, else
     ?assertSame(
-        "-if(true).\n"
+        "-if(true).\n\n\n"
         "ok() -> ok.\n"
         "\n"
-        "-if(true).\n"
-        "\n"
-        "ok() -> ok.\n"
-    ),
-    ?assertSame(
-        "-ifdef(FOO).\n"
-        "ok() -> ok.\n"
-        "\n"
-        "-ifdef(FOO).\n"
+        "-if(true).\n\n"
         "\n"
         "ok() -> ok.\n"
     ),
     ?assertSame(
-        "-ifndef(FOO).\n"
+        "-ifdef(FOO).\n\n\n"
         "ok() -> ok.\n"
         "\n"
-        "-ifndef(FOO).\n"
+        "-ifdef(FOO).\n\n"
+        "\n"
+        "ok() -> ok.\n"
+    ),
+    ?assertSame(
+        "-ifndef(FOO).\n\n\n"
+        "ok() -> ok.\n"
+        "\n"
+        "-ifndef(FOO).\n\n"
         "\n"
         "ok() -> ok.\n"
     ),
     %% preserves empty line before else, endif
     ?assertSame(
         "ok() -> ok.\n"
-        "-else.\n"
+        "-else.\n\n"
         "\n"
         "ok() -> ok.\n"
         "\n"
@@ -3643,7 +3643,7 @@ ifdef(Config) when is_list(Config) ->
     ),
     ?assertSame(
         "ok() -> ok.\n"
-        "-endif.\n"
+        "-endif.\n\n"
         "\n"
         "ok() -> ok.\n"
         "\n"
@@ -3658,7 +3658,7 @@ ifdef(Config) when is_list(Config) ->
         "stop(_State) ->\n"
         "    ok.\n"
         "-endif().\n",
-        "-ifdef(TEST).\n"
+        "-ifdef(TEST).\n\n\n"
         "start(_StartType, _StartArgs) ->\n"
         "    mylib_sup:start_link().\n"
         "\n\n"
@@ -3900,9 +3900,9 @@ spec(Config) when is_list(Config) ->
     ),
     ?assertSame(
         "-spec do_stuff(Arg :: binary()) -> binary().\n"
-        "-ifdef(TEST).\n"
+        "-ifdef(TEST).\n\n\n"
         "do_stuff(Arg) -> Arg.\n"
-        "-else.\n"
+        "-else.\n\n\n"
         "do_stuff(_Arg) -> <<\"ok\">>.\n"
         "-endif.\n"
     ),

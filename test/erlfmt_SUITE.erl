@@ -1569,7 +1569,7 @@ insert_pragma(Config) when is_list(Config) ->
         "-module(pragma).\n"
         "\n"
         "-export([f/3]).\n"
-        "\n"
+        "\n\n"
         "f(_Arg1, _Arg2, _Arg3) ->\n"
         "    ok.\n",
         insert_pragma_string(
@@ -1687,12 +1687,12 @@ overlong_warning(Config) when is_list(Config) ->
     RangeLongLines = [{LineNo, Length} || {_, LineNo, _, {long_line, Length, _}} <- RangeWarnings],
     % Line 6 is an overlong comment
     % Line 8 is a comment which would be too long if we counted bytes of a utf-8 encoding instead of glyphs
-    ?assert(lists:member({6, 121}, FileLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- FileLongLines]),
-    ?assert(lists:member({6, 121}, StringLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- StringLongLines]),
-    ?assert(lists:member({6, 121}, RangeLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- RangeLongLines]).
+    ?assert(lists:member({7, 121}, FileLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- FileLongLines]),
+    ?assert(lists:member({7, 121}, StringLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- StringLongLines]),
+    ?assert(lists:member({7, 121}, RangeLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- RangeLongLines]).
 
 do_not_crash_on_bad_record(Config) when is_list(Config) ->
     %% normal record

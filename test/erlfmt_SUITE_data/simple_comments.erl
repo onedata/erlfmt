@@ -34,6 +34,7 @@
             bar()
     ).
 
+
 -spec foo() ->
     %% comment
     term()
