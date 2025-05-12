@@ -3609,33 +3609,33 @@ exportimport(Config) when is_list(Config) ->
 ifdef(Config) when is_list(Config) ->
     %% preserves empty line after if, ifdef, ifndef, else
     ?assertSame(
-        "-if(true).\n"
+        "-if(true).\n\n\n"
         "ok() -> ok.\n"
         "\n"
-        "-if(true).\n"
-        "\n"
-        "ok() -> ok.\n"
-    ),
-    ?assertSame(
-        "-ifdef(FOO).\n"
-        "ok() -> ok.\n"
-        "\n"
-        "-ifdef(FOO).\n"
+        "-if(true).\n\n"
         "\n"
         "ok() -> ok.\n"
     ),
     ?assertSame(
-        "-ifndef(FOO).\n"
+        "-ifdef(FOO).\n\n\n"
         "ok() -> ok.\n"
         "\n"
-        "-ifndef(FOO).\n"
+        "-ifdef(FOO).\n\n"
+        "\n"
+        "ok() -> ok.\n"
+    ),
+    ?assertSame(
+        "-ifndef(FOO).\n\n\n"
+        "ok() -> ok.\n"
+        "\n"
+        "-ifndef(FOO).\n\n"
         "\n"
         "ok() -> ok.\n"
     ),
     %% preserves empty line before else, endif
     ?assertSame(
         "ok() -> ok.\n"
-        "-else.\n"
+        "-else.\n\n"
         "\n"
         "ok() -> ok.\n"
         "\n"
@@ -3643,18 +3643,25 @@ ifdef(Config) when is_list(Config) ->
     ),
     ?assertSame(
         "ok() -> ok.\n"
-        "-endif.\n"
+        "-endif.\n\n"
         "\n"
         "ok() -> ok.\n"
         "\n"
         "-endif.\n"
     ),
     %% preserves no empty line before endif
-    ?assertSame(
+    ?assertFormat(
         "-ifdef(TEST).\n"
         "start(_StartType, _StartArgs) ->\n"
         "    mylib_sup:start_link().\n"
         "\n"
+        "stop(_State) ->\n"
+        "    ok.\n"
+        "-endif().\n",
+        "-ifdef(TEST).\n\n\n"
+        "start(_StartType, _StartArgs) ->\n"
+        "    mylib_sup:start_link().\n"
+        "\n\n"
         "stop(_State) ->\n"
         "    ok.\n"
         "-endif().\n"
@@ -3893,9 +3900,9 @@ spec(Config) when is_list(Config) ->
     ),
     ?assertSame(
         "-spec do_stuff(Arg :: binary()) -> binary().\n"
-        "-ifdef(TEST).\n"
+        "-ifdef(TEST).\n\n\n"
         "do_stuff(Arg) -> Arg.\n"
-        "-else.\n"
+        "-else.\n\n\n"
         "do_stuff(_Arg) -> <<\"ok\">>.\n"
         "-endif.\n"
     ),
@@ -4419,6 +4426,15 @@ doc_attributes(Config) when is_list(Config) ->
 
 doc_macros(Config) when is_list(Config) ->
     %% Doc Attributes as macros is a common pattern for OTP < 27 compatibility.
-    ?assertSame("?MODULEDOC(\"Test\").\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n"),
-    ?assertSame("?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\ntest() -> ok.\n"),
-    ?assertSame("?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n").
+    ?assertFormat(
+        "?MODULEDOC(\"Test\").\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n",
+        "?MODULEDOC(\"Test\").\n\n\n?MODULEDOC(#{since => <<\"1.0.0\">>}).\n"
+    ),
+    ?assertFormat(
+        "?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\ntest() -> ok.\n",
+        "?DOC(\"Test\").\n\n\n?DOC(#{since => <<\"1.0.0\">>}).\n\n\ntest() -> ok.\n"
+    ),
+    ?assertFormat(
+        "?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n",
+        "?DOC(\"Test\").\n\n\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n"
+    ).

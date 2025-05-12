@@ -78,6 +78,7 @@
     line/0,
     line/1,
     line/2,
+    line/3,
     fold_doc/2,
     format/2
 ]).
@@ -399,6 +400,11 @@ line(Count) when is_integer(Count), Count > 0 -> #doc_line{count = Count}.
 % Inserts a mandatory linebreak between two documents.
 -spec line(doc(), doc()) -> doc().
 line(Doc1, Doc2) -> concat(Doc1, line(), Doc2).
+
+% Inserts a mandatory linebreak (of count nl) between two documents.
+-spec line(doc(), doc(), integer()) -> doc().
+line(Doc1, Doc2, Count) when is_integer(Count), Count > 0 ->
+    concat(Doc1, line(Count), Doc2).
 
 %   Folds a list of documents into a document using the given folder function.
 %   The list of documents is folded "from the right"; in that, this function is

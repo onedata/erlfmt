@@ -608,7 +608,7 @@ format_nodes_loop([Node | [Next | _] = Rest], PrintWidth) ->
     [
         $\n,
         format_node(Node, PrintWidth),
-        maybe_empty_line(Node, Next)
+        maybe_empty_lines(Node, Next)
         | format_nodes_loop(Rest, PrintWidth)
     ];
 format_nodes_loop([Node], PrintWidth) ->
@@ -616,7 +616,16 @@ format_nodes_loop([Node], PrintWidth) ->
 format_nodes_loop([], _PrintWidth) ->
     [].
 
-maybe_empty_line(Node, Next) ->
+% There should always be 2 empty lines before functions regardless if they have specs or not
+maybe_empty_lines({attribute, _, _, _}, {attribute, _, {atom, _, spec}, _}) ->
+    "\n\n";
+maybe_empty_lines({attribute, _, {atom, _, Type}, _}, {function, _, _}) when Type /= spec ->
+    "\n\n";
+maybe_empty_lines({function, _, _}, {attribute, _, {atom, _, spec}, _}) ->
+    "\n\n";
+maybe_empty_lines({function, _, _}, {function, _, _}) ->
+    "\n\n";
+maybe_empty_lines(Node, Next) ->
     case has_empty_line_between(Node, Next) of
         true -> "\n";
         false -> ""

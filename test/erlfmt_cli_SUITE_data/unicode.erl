@@ -1,7 +1,9 @@
 -module(unicode).
 
+
 %% we read ahead by one form, so we need this to test properly read_rest with what follows
 second_form() -> "שלום עולם".
+
 
 %% we need to trigger read_rest going into the loop, so we need > 4096 chars
 large_form() ->
@@ -93,6 +95,7 @@ large_form() ->
         1463, 1464, 1465, 1466, 1467, 1468, 1469, 1470, 1471, 1472, 1473, 1474, 1475, 1476, 1477,
         1478, 1479, 1480, 1481, 1482, 1483, 1484, 1485, 1486, 1487, 1488, 1489, 1490, 1491, 1492,
         1493, 1494, 1495, 1496, 1497, 1498, 1499, 1500>>.
+
 
 encode_decode_unicode(_Config) ->
     "שלום עולם".

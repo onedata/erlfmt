@@ -260,6 +260,7 @@ For example in lists, where the whole list is broken up, if it contains a line b
     baz/5
 ]).
 
+
 x() ->
     Foo = [
         short,

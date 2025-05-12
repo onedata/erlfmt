@@ -30,7 +30,9 @@
 
 -type klm() :: fun() | binary().
 
+
 foo() -> ?FOO.
+
 
 bar() -> ?BAR.
 

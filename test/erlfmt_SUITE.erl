@@ -70,6 +70,7 @@
     snapshot_ignore_format_many/1,
     snapshot_ignore_format_old/1,
     snapshot_ignore_format_many_old/1,
+    snapshot_onedata/1,
     snapshot_empty/1,
     format_string_unicode/1,
     error_ignore_begin_ignore/1,
@@ -178,6 +179,7 @@ groups() ->
             snapshot_ignore_format_many,
             snapshot_ignore_format_old,
             snapshot_ignore_format_many_old,
+            snapshot_onedata,
             snapshot_empty,
             format_string_unicode,
             {group, otp_27_snapshot_tests}
@@ -1106,6 +1108,8 @@ snapshot_ignore_format_old(Config) -> snapshot_formatted("ignore_format_old.erl"
 
 snapshot_ignore_format_many_old(Config) -> snapshot_formatted("ignore_format_many_old.erl", Config).
 
+snapshot_onedata(Config) -> snapshot_formatted("onedata.erl", Config).
+
 snapshot_empty(Config) -> snapshot_same("empty.erl", Config).
 
 snapshot_insert_pragma_with(Config) when is_list(Config) ->
@@ -1319,7 +1323,7 @@ snapshot_range_partial_two_forms(_) ->
         "z()   ->  2.\n",
     % Only x() and y() should be touched.
     Reference =
-        "x() -> 0.\n"
+        "x() -> 0.\n\n\n"
         "y() -> 1.\n"
         "z()   ->  2.\n",
     Result = erlfmt:format_string_range(Original, {1, 1}, {2, 11}, []),
@@ -1565,7 +1569,7 @@ insert_pragma(Config) when is_list(Config) ->
         "-module(pragma).\n"
         "\n"
         "-export([f/3]).\n"
-        "\n"
+        "\n\n"
         "f(_Arg1, _Arg2, _Arg3) ->\n"
         "    ok.\n",
         insert_pragma_string(
@@ -1683,12 +1687,12 @@ overlong_warning(Config) when is_list(Config) ->
     RangeLongLines = [{LineNo, Length} || {_, LineNo, _, {long_line, Length, _}} <- RangeWarnings],
     % Line 6 is an overlong comment
     % Line 8 is a comment which would be too long if we counted bytes of a utf-8 encoding instead of glyphs
-    ?assert(lists:member({6, 121}, FileLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- FileLongLines]),
-    ?assert(lists:member({6, 121}, StringLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- StringLongLines]),
-    ?assert(lists:member({6, 121}, RangeLongLines)),
-    ?assertEqual([], [Line || {8, _} = Line <- RangeLongLines]).
+    ?assert(lists:member({7, 121}, FileLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- FileLongLines]),
+    ?assert(lists:member({7, 121}, StringLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- StringLongLines]),
+    ?assert(lists:member({7, 121}, RangeLongLines)),
+    ?assertEqual([], [Line || {9, _} = Line <- RangeLongLines]).
 
 do_not_crash_on_bad_record(Config) when is_list(Config) ->
     %% normal record
