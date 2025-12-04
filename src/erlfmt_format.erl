@@ -1,4 +1,4 @@
-%% Copyright (c) Meta Platforms, Inc. and its affiliates.
+%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -79,7 +79,11 @@ to_algebra({attribute, Meta, {atom, _, import}, [Name, {list, Anno, Imports}]}) 
     Doc = call(Meta, [Name, GroupedImports], <<"-import(">>, <<")">>),
     combine_comments_with_dot(Meta, Doc);
 to_algebra({attribute, Meta, {atom, _, RawName} = Name, [Value]}) when
-    RawName =:= type; RawName =:= opaque; RawName =:= spec; RawName =:= callback
+    RawName =:= type;
+    RawName =:= opaque;
+    RawName =:= spec;
+    RawName =:= callback;
+    RawName =:= nominal
 ->
     ValueD = next_break_fits(expr_to_algebra(Value), enabled),
     Doc = concat([<<"-">>, expr_to_algebra(Name), <<" ">>, ValueD]),
@@ -187,10 +191,8 @@ do_expr_to_algebra({mc, _Meta, Expr, LcExprs}) ->
     comprehension_to_algebra(Expr, LcExprs, <<"#{">>, <<"}">>);
 do_expr_to_algebra({bc, _Meta, Expr, LcExprs}) ->
     comprehension_to_algebra(Expr, LcExprs, <<"<<">>, <<">>">>);
-do_expr_to_algebra({generate, _Meta, Left, Right}) ->
-    field_to_algebra(<<"<-">>, Left, Right);
-do_expr_to_algebra({b_generate, _Meta, Left, Right}) ->
-    field_to_algebra(<<"<=">>, Left, Right);
+do_expr_to_algebra({generate, _Meta, Op, Left, Right}) ->
+    field_to_algebra(atom_to_binary(Op), Left, Right);
 do_expr_to_algebra({call, Meta, Name, Args}) ->
     concat(expr_to_algebra(Name), call(Meta, Args, <<"(">>, <<")">>));
 do_expr_to_algebra({macro_call, _Meta, Name, none}) ->
@@ -202,20 +204,20 @@ do_expr_to_algebra({macro_string, _Meta, Name}) ->
 do_expr_to_algebra({remote, _Meta, Left, Right}) ->
     concat(expr_to_algebra(Left), <<":">>, expr_to_algebra(Right));
 do_expr_to_algebra({block, Meta, Exprs}) ->
-    surround_block(<<"begin">>, block_to_algebra(Meta, Exprs), <<"end">>);
+    surround_block(<<"begin">>, Exprs, fun(X) -> block_to_algebra(Meta, X) end, <<"end">>);
 do_expr_to_algebra({'fun', _Meta, Expr}) ->
     fun_to_algebra(Expr);
 do_expr_to_algebra({args, Meta, Values}) ->
     container(Meta, Values, <<"(">>, <<")">>);
 do_expr_to_algebra({'case', _Meta, Expr, Clauses}) ->
     Prefix = surround(<<"case">>, <<" ">>, expr_to_algebra(Expr), <<" ">>, <<"of">>),
-    surround_block(Prefix, clauses_to_algebra(Clauses), <<"end">>);
+    surround_block(Prefix, Clauses, fun clauses_to_algebra/1, <<"end">>);
 do_expr_to_algebra({'maybe', _Meta, MaybeExpressions}) ->
-    surround_block(<<"maybe">>, maybe_expressions_to_algebra(MaybeExpressions), <<"end">>);
+    surround_block(<<"maybe">>, MaybeExpressions, fun maybe_expressions_to_algebra/1, <<"end">>);
 do_expr_to_algebra({'maybe', _Meta, MaybeExpressions, Else}) ->
     ElseD = expr_to_algebra(Else),
     surround_block(
-        <<"maybe">>, maybe_expressions_to_algebra(MaybeExpressions), line(ElseD, <<"end">>)
+        <<"maybe">>, MaybeExpressions, fun maybe_expressions_to_algebra/1, line(ElseD, <<"end">>)
     );
 do_expr_to_algebra({else_clause, _Meta, Clauses}) ->
     concat(
@@ -223,13 +225,10 @@ do_expr_to_algebra({else_clause, _Meta, Clauses}) ->
         group(concat(<<"else">>, nest(concat(line(), clauses_to_algebra(Clauses)), ?INDENT)))
     );
 do_expr_to_algebra({'receive', _Meta, Clauses}) ->
-    surround_block(<<"receive">>, expr_to_algebra(Clauses), <<"end">>);
-do_expr_to_algebra({'receive', _Meta, empty, After}) ->
-    AfterD = expr_to_algebra(After),
-    concat(force_breaks(), (line(<<"receive">>, line(AfterD, <<"end">>))));
+    surround_block(<<"receive">>, Clauses, fun expr_to_algebra/1, <<"end">>);
 do_expr_to_algebra({'receive', _Meta, Clauses, After}) ->
     AfterD = expr_to_algebra(After),
-    surround_block(<<"receive">>, expr_to_algebra(Clauses), line(AfterD, <<"end">>));
+    surround_block(<<"receive">>, Clauses, fun expr_to_algebra/1, line(AfterD, <<"end">>));
 do_expr_to_algebra({after_clause, _Meta, Expr, Body}) ->
     receive_after_to_algebra(Expr, Body);
 do_expr_to_algebra({'try', _Meta, Exprs, OfClauses, CatchClauses, After}) ->
@@ -238,7 +237,7 @@ do_expr_to_algebra({'catch', _Meta, Exprs}) ->
     ExprsD = lists:map(fun expr_to_algebra/1, Exprs),
     fold_doc(fun(Doc, Acc) -> concat(Doc, <<":">>, Acc) end, ExprsD);
 do_expr_to_algebra({'if', _Meta, Clauses}) ->
-    surround_block(<<"if">>, clauses_to_algebra(Clauses), <<"end">>);
+    surround_block(<<"if">>, Clauses, fun clauses_to_algebra/1, <<"end">>);
 do_expr_to_algebra({spec, _Meta, Name, [SingleClause]}) ->
     single_clause_spec_to_algebra(Name, SingleClause);
 do_expr_to_algebra({spec, _Meta, Name, Clauses}) ->
@@ -262,13 +261,8 @@ do_expr_to_algebra({clauses, _Meta, Clauses}) ->
 do_expr_to_algebra({body, _Meta, Exprs}) ->
     block_to_algebra(Exprs);
 do_expr_to_algebra({sigil, _Meta, Prefix, Content, Suffix}) ->
-    concat(
-        concat(
-            concat(<<"~">>, do_expr_to_algebra(Prefix)),
-            do_expr_to_algebra(Content)
-        ),
-        do_expr_to_algebra(Suffix)
-    );
+    PrefixDoc = concat(<<"~">>, do_expr_to_algebra(Prefix)),
+    concat(concat(PrefixDoc, do_expr_to_algebra(Content)), do_expr_to_algebra(Suffix));
 do_expr_to_algebra({sigil_prefix, _Meta, ''}) ->
     <<"">>;
 do_expr_to_algebra({sigil_prefix, _Meta, SigilName}) ->
@@ -289,7 +283,10 @@ surround(Left, LeftSpace, Doc, RightSpace, Right) ->
         )
     ).
 
-surround_block(Left, Doc, Right) ->
+surround_block(Left, Empty, _Mapper, Right) when Empty =:= []; Empty =:= empty ->
+    line(Left, Right);
+surround_block(Left, Clauses, Mapper, Right) ->
+    Doc = Mapper(Clauses),
     concat(
         force_breaks(),
         group(line(concat(Left, nest(concat(line(), Doc), ?INDENT)), Right))
@@ -754,8 +751,7 @@ fun_to_algebra({clauses, _Anno, [Clause]}) ->
         _ -> group(break(space(<<"fun">>, ClauseD), <<"end">>))
     end;
 fun_to_algebra({clauses, _Anno, Clauses}) ->
-    ClausesD = clauses_to_algebra(Clauses),
-    surround_block(<<"fun">>, ClausesD, <<"end">>);
+    surround_block(<<"fun">>, Clauses, fun clauses_to_algebra/1, <<"end">>);
 fun_to_algebra(type) ->
     <<"fun()">>;
 fun_to_algebra({type, Meta, Args, Result}) ->

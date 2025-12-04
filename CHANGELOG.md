@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.7.0 (13.06.2025)
+
+### Enhancements
+
+  - Support for zip and strict generators in comprehensions from OTP 28
+  - Support for nominal types from OTP 28
+  - Support some partially invalid code - e.g. case or receive with no clauses
+
+### Fixes
+
+  - Fix crash with sigils inside ignored sections
+  - Improve `erlfmt:error_info()` type
+
+## v1.6.2 (25.04.2025)
+
+### Fixes
+
+  - Fix crash when two erlfmt-ignore-begin/end blocks immediately followed
+
 ## v1.6.1 (04.04.2025)
 
 ### Fixes

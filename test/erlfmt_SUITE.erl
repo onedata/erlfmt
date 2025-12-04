@@ -1,4 +1,4 @@
-%% Copyright (c) Meta Platforms, Inc. and its affiliates.
+%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@
     snapshot_range_reinjected/1,
     snapshot_tripple_string/1,
     snapshot_tripple_crash/1,
+    snapshot_sigil_crash/1,
     contains_pragma/1,
     insert_pragma/1,
     overlong_warning/1,
@@ -186,7 +187,8 @@ groups() ->
         ]},
         {otp_27_snapshot_tests, [parallel], [
             snapshot_tripple_string,
-            snapshot_tripple_crash
+            snapshot_tripple_crash,
+            snapshot_sigil_crash
         ]},
         {error_tests, [parallel], [
             error_ignore_begin_ignore,
@@ -1012,7 +1014,7 @@ dotted(Config) when is_list(Config) ->
 map_comprehension(Config) when is_list(Config) ->
     ?assertMatch(
         {mc, _, {map_field_assoc, _, {var, _, 'A'}, {var, _, 'B'}}, [
-            {generate, _, {map_field_exact, _, {var, _, 'A'}, {var, _, 'B'}}, {var, _, 'M'}}
+            {generate, _, '<-', {map_field_exact, _, {var, _, 'A'}, {var, _, 'B'}}, {var, _, 'M'}}
         ]},
         parse_expr("#{A => B || A := B <- M}")
     ).
@@ -1118,6 +1120,8 @@ snapshot_insert_pragma_with(Config) when is_list(Config) ->
 snapshot_tripple_string(Config) -> snapshot_formatted("tripple_string.erl", Config).
 
 snapshot_tripple_crash(Config) -> snapshot_same("tripple_crash.erl", Config).
+
+snapshot_sigil_crash(Config) -> snapshot_same("sigil_crash.erl", Config).
 
 snapshot_same(Module, Config) ->
     Pragma = proplists:get_value(pragma, Config, ignore),

@@ -1,4 +1,4 @@
-%% Copyright (c) Meta Platforms, Inc. and its affiliates.
+%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@
 
 -export_type([error_info/0, config_option/0, config/0, pragma/0]).
 
--type error_info() :: {file:name_all(), erl_anno:location(), module(), Reason :: any()}.
+-type error_info() :: {
+    file:name_all(), erl_anno:location() | erlfmt_scan:anno(), module(), Reason :: any()
+}.
 -type pragma() :: require | insert | delete | ignore.
 -type config_option() :: {pragma, pragma()} | {print_width, pos_integer()} | verbose.
 -type config() :: [config_option()].
@@ -414,11 +416,19 @@ read_file(FileName, Action) ->
     end.
 
 % Return file as one big string (with '\n' as line separator).
+-if(?OTP_RELEASE >= 27).
+read_file_or_stdin(stdin) ->
+    read_stdin([]);
+read_file_or_stdin(FileName) ->
+    {ok, Bin} = file:read_file(FileName, [raw]),
+    unicode:characters_to_list(Bin).
+-else.
 read_file_or_stdin(stdin) ->
     read_stdin([]);
 read_file_or_stdin(FileName) ->
     {ok, Bin} = file:read_file(FileName),
     unicode:characters_to_list(Bin).
+-endif.
 
 read_stdin(Acc) ->
     case io:get_line("") of
@@ -538,15 +548,11 @@ parse(Tokens) ->
     end.
 
 ignore_state_pre(PreComments, FileName, Acc) ->
-    case ignore_state(PreComments, FileName, Acc) of
-        'end' -> false;
-        Other -> Other
-    end.
+    ignore_state(PreComments, FileName, Acc).
 
 ignore_state_post(PostComments, FileName, Acc) ->
     case ignore_state(PostComments, FileName, Acc) of
         ignore -> false;
-        'end' -> false;
         Other -> Other
     end.
 
@@ -570,7 +576,7 @@ ignore_state([Line | Lines], FileName, Loc, Rest, Acc0) ->
             "erlfmt-ignore-begin" ++ R when ?IS_IGNORE_REASON(R) ->
                 throw({error, {FileName, Loc, ?MODULE, {invalid_ignore, 'begin', Acc0}}});
             "erlfmt-ignore-end" ++ R when ?IS_IGNORE_REASON(R), Acc0 =:= 'begin' ->
-                'end';
+                false;
             "erlfmt-ignore-end" ++ R when ?IS_IGNORE_REASON(R) ->
                 throw({error, {FileName, Loc, ?MODULE, {invalid_ignore, 'end', Acc0}}});
             % New-style erlfmt:ignore
@@ -583,7 +589,7 @@ ignore_state([Line | Lines], FileName, Loc, Rest, Acc0) ->
             "erlfmt:ignore-begin" ++ R when ?IS_IGNORE_REASON(R) ->
                 throw({error, {FileName, Loc, ?MODULE, {invalid_ignore, 'begin', Acc0}}});
             "erlfmt:ignore-end" ++ R when ?IS_IGNORE_REASON(R), Acc0 =:= 'begin' ->
-                'end';
+                false;
             "erlfmt:ignore-end" ++ R when ?IS_IGNORE_REASON(R) ->
                 throw({error, {FileName, Loc, ?MODULE, {invalid_ignore, 'end', Acc0}}});
             _ ->

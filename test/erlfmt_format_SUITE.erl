@@ -1,4 +1,4 @@
-%% Copyright (c) Meta Platforms, Inc. and its affiliates.
+%% Copyright (c) Meta Platforms, Inc. and affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -73,7 +73,12 @@
     update_edgecase/1,
     sigils/1,
     doc_attributes/1,
-    doc_macros/1
+    doc_macros/1,
+    incomplete/1,
+    maybe_incomplete/1,
+    strict_generators/1,
+    zip_generators/1,
+    nominal_type/1
 ]).
 
 suite() ->
@@ -91,13 +96,18 @@ init_per_group(otp_27_features, Config) ->
         true -> Config;
         false -> {skip, "Skipping tests for features from OTP >= 27"}
     end;
+init_per_group(otp_28_features, Config) ->
+    case erlang:system_info(otp_release) >= "28" of
+        true -> Config;
+        false -> {skip, "Skipping tests for features from OTP >= 28"}
+    end;
 init_per_group(_GroupName, Config) ->
     Config.
 
 end_per_group(_GroupName, _Config) ->
     ok.
 
-init_per_testcase(maybe_expression, Config) ->
+init_per_testcase(Maybe, Config) when Maybe =:= maybe_expression; Maybe =:= maybe_incomplete ->
     case has_feature(maybe_expr, Config) of
         true -> Config;
         false -> {skip, "Maybe feature not present in the runtime system"}
@@ -122,11 +132,13 @@ groups() ->
             fun_expression,
             case_expression,
             maybe_expression,
+            maybe_incomplete,
             receive_expression,
             try_expression,
             if_expression,
             macro,
-            doc_macros
+            doc_macros,
+            incomplete
         ]},
         {forms, [parallel], [
             function,
@@ -170,6 +182,11 @@ groups() ->
         {otp_27_features, [parallel], [
             sigils,
             doc_attributes
+        ]},
+        {otp_28_features, [parallel], [
+            strict_generators,
+            zip_generators,
+            nominal_type
         ]}
     ].
 
@@ -178,6 +195,7 @@ all() ->
         {group, expressions},
         {group, forms},
         {group, otp_27_features},
+        {group, otp_28_features},
         comment
     ].
 
@@ -3371,7 +3389,8 @@ macro(Config) when is_list(Config) ->
         23
     ),
     ?assertSame("?macro(Expr when Guard1; Guard2)\n"),
-    ?assertFormat("?foo(X,)\n", "?foo(X)\n").
+    ?assertFormat("?foo(X,)\n", "?foo(X)\n"),
+    ?assertSame("?macro(Expr, t1() | t2())\n").
 
 function(Config) when is_list(Config) ->
     ?assertSame("f() -> ok.\n"),
@@ -4437,4 +4456,67 @@ doc_macros(Config) when is_list(Config) ->
     ?assertFormat(
         "?DOC(\"Test\").\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n",
         "?DOC(\"Test\").\n\n\n?DOC(#{since => <<\"1.0.0\">>}).\n-type t() :: ok.\n"
+    ).
+
+incomplete(Config) when is_list(Config) ->
+    ?assertSame(
+        "case X of\n"
+        "end.\n"
+    ),
+    ?assertSame(
+        "receive\n"
+        "end.\n"
+    ),
+    ?assertSame(
+        "if\n"
+        "end.\n"
+    ),
+    ?assertSame(
+        "fun\n"
+        "end.\n"
+    ),
+    ?assertSame(
+        "begin\n"
+        "end.\n"
+    ).
+
+maybe_incomplete(Config) when is_list(Config) ->
+    ?assertSame(
+        "maybe\n"
+        "end.\n"
+    ),
+    ?assertSame(
+        "maybe\n"
+        "else\n"
+        "    ok -> ok\n"
+        "end.\n"
+    ).
+
+strict_generators(Config) when is_list(Config) ->
+    ?assertSame("[X || X <:- Xs]\n"),
+    ?assertSame("[{K, V} || K := V <:- M]\n"),
+    ?assertSame("[X || <<X>> <:= Xs]\n").
+
+zip_generators(Config) when is_list(Config) ->
+    ?assertSame("[{X, Y} || X <- Xs && Y <- Ys]\n"),
+    ?assertFormat(
+        "[{X, Y} || X <- Xs && Y <- Ys, X < Y]\n",
+        "[\n"
+        "    {X, Y}\n"
+        " || X <- Xs &&\n"
+        "        Y <- Ys,\n"
+        "    X < Y\n"
+        "]\n",
+        16
+    ).
+
+nominal_type(Config) when is_list(Config) ->
+    ?assertSame(
+        "-nominal foo() :: #foo{a :: integer(), b :: module:type()}.\n"
+    ),
+    ?assertSame(
+        "-nominal foo() :: {<<>>, <<_:8>>, <<_:_*4>>, <<_:8, _:_*4>>}.\n"
+    ),
+    ?assertSame(
+        "-nominal foo() :: {fun(), fun((...) -> mod:bar()), fun(() -> integer())}.\n"
     ).
