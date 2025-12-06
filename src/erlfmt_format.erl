@@ -455,7 +455,8 @@ binary_op_to_algebra(Op, Meta, Left, Right, Indent) ->
 
 field_to_algebra(OpD, Left, Right, LeftD, RightD, Indent) ->
     case
-        (is_call(Right) orelse is_next_break_fits(Right)) andalso
+        (lists:member(OpD, [<<"=">>, <<":=">>, <<"=>">>]) orelse is_call(Right) orelse
+            is_next_break_fits(Right)) andalso
             not has_break_between(Left, Right)
     of
         true ->
