@@ -19,13 +19,24 @@
 -export([bar/0]).
 
 % aggregator function applied when a new measurement is inserted into a time window
--type aggregator() :: sum | max | min | last | first | avg. % | {gather, Max}. % TODO VFS-8164 - extend functions list
+-type aggregator() :: sum | max | min | last | first | avg.
 -export_type([aggregator/0]).
 
+% 7 days
+-define(WEEK_RESOLUTION, 648000).
+
+%% erlfmt:ignore
 -define(MONTH_RESOLUTION, 2592000).  % 30 days
+
+%% erlfmt:ignore-begin
 -define(YEAR_RESOLUTION, 31536000).  % 365 days
 
--record(struct, {a, b, c}).
+-record(struct, {
+    a,
+    b, % comment 2
+    c % comment 3
+}).
+%% erlfmt:ignore-end
 
 
 %%%===================================================================
@@ -82,6 +93,38 @@ bar() ->
         <<"GET">> ->
             foo(5),
             error
+    end.
+
+
+duh() ->
+    lists:map(
+        fun(Element) ->
+            Element * 2
+        end,
+        lists:seq(10, 20)
+    ),
+
+    callback(fun(Element) ->
+        Element * 2
+    end),
+
+    true andalso
+        1111111111111111111111111111111111111111111111111111111111 +
+            111111111111111111111111111111111111111111111,
+    A = case
+        1111111111111111111111111111111111111111111111111111111111 + 1111111111111111111111111111111
+    of
+        1 ->
+            case 2 of
+                5 ->
+                    #{
+                        key => case 7 of
+                            8 -> 9
+                        end
+                    }
+            end;
+        3 ->
+            4
     end.
 
 
