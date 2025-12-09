@@ -360,9 +360,8 @@ string_concat(Config) when is_list(Config) ->
     ?assertFormat(
         "X = \"foo\n"
         "bar\"",
-        "X =\n"
-        "    \"foo\\n\"\n"
-        "    \"bar\"\n"
+        "X = \"foo\\n\"\n"
+        "\"bar\"\n"
     ),
     ?assertFormat(
         "-define(R,\n"
@@ -630,9 +629,8 @@ binary_operator(Config) when is_list(Config) ->
     ),
     ?assertFormat(
         "Foo = {foo, bar, verylong, morelonger, baz}\n",
-        "Foo =\n"
-        "    {foo, bar, verylong, morelonger,\n"
-        "        baz}\n",
+        "Foo = {foo, bar, verylong, morelonger,\n"
+        "    baz}\n",
         40
     ),
 
@@ -909,11 +907,10 @@ binary_operator_equal(Config) when is_list(Config) ->
         "        D,\n"
         "        E\n"
         "    ).\n",
-        "A =\n"
-        "    B = c(\n"
-        "        D,\n"
-        "        E\n"
-        "    ).\n"
+        "A = B = c(\n"
+        "    D,\n"
+        "    E\n"
+        ").\n"
     ),
     ?assertSame(
         "case maps:get(AbcdefghId, Abcdefghs0, undefined) of\n"
@@ -940,12 +937,11 @@ binary_operator_equal(Config) when is_list(Config) ->
         "        true -> f();\n"
         "        _ -> g()\n"
         "    end.\n",
-        "A =\n"
-        "    {B, C} =\n"
-        "    case X of\n"
-        "        true -> f();\n"
-        "        _ -> g()\n"
-        "    end.\n"
+        "A = {B, C} =\n"
+        "case X of\n"
+        "    true -> f();\n"
+        "    _ -> g()\n"
+        "end.\n"
     ),
     ?assertFormat(
         "A = {{B1, B2}, C} = {B, C} =\n"
@@ -953,13 +949,11 @@ binary_operator_equal(Config) when is_list(Config) ->
         "        true -> f();\n"
         "        _ -> g()\n"
         "    end.\n",
-        "A =\n"
-        "    {{B1, B2}, C} =\n"
-        "    {B, C} =\n"
-        "    case X of\n"
-        "        true -> f();\n"
-        "        _ -> g()\n"
-        "    end.\n"
+        "A = {{B1, B2}, C} = {B, C} =\n"
+        "case X of\n"
+        "    true -> f();\n"
+        "    _ -> g()\n"
+        "end.\n"
     ),
     ?assertSame(
         "A =\n"
@@ -970,40 +964,25 @@ binary_operator_equal(Config) when is_list(Config) ->
         "                _ -> g()\n"
         "            end)).\n"
     ),
-    ?assertFormat(
-        "A = B = C = D = E = F\n.",
-        "A =\n"
-        "    B =\n"
-        "    C =\n"
-        "    D =\n"
-        "    E = F.\n",
-        10
+    ?assertSame(
+        "A = B = C = D = E = F.\n"
     ),
     ?assertFormat(
         "A = B = C =< D = E = F\n.",
-        "A =\n"
-        "    B =\n"
-        "    C =< D =\n"
-        "    E = F.\n",
+        "A = B = C =<\n"
+        "    D = E = F.\n",
         10
     ),
-    ?assertFormat(
+    ?assertSame(
         "A =\n"
-        "    B = C = D = E = F\n.",
-        "A =\n"
-        "    B =\n"
-        "    C =\n"
-        "    D =\n"
-        "    E = F.\n",
-        10
+        "    B = C = D = E = F.\n"
     ),
     ?assertFormat(
         "A = B = c(D, E).\n",
-        "A =\n"
-        "    B = c(\n"
-        "        D,\n"
-        "        E\n"
-        "    ).\n",
+        "A = B = c(\n"
+        "    D,\n"
+        "    E\n"
+        ").\n",
         5
     ),
     ?assertSame(
@@ -1767,10 +1746,8 @@ map_create(Config) when is_list(Config) ->
     ?assertFormat(
         "#{11 => 22, 33 => 44}",
         "#{\n"
-        "    11 =>\n"
-        "        22,\n"
-        "    33 =>\n"
-        "        44\n"
+        "    11 => 22,\n"
+        "    33 => 44\n"
         "}\n",
         10
     ),
@@ -1843,9 +1820,8 @@ record_create(Config) when is_list(Config) ->
         "#foo{a=1,b=Foo+Bar}",
         "#foo{\n"
         "    a = 1,\n"
-        "    b =\n"
-        "        Foo +\n"
-        "            Bar\n"
+        "    b = Foo +\n"
+        "        Bar\n"
         "}\n",
         15
     ),
@@ -2233,8 +2209,7 @@ map_comprehension(Config) when is_list(Config) ->
         "#{X => X || X := VeryLongExpression <- VeryLongExpression, X < 10}",
         "#{\n"
         "    X => X\n"
-        " || X :=\n"
-        "        VeryLongExpression <-\n"
+        " || X := VeryLongExpression <-\n"
         "        VeryLongExpression,\n"
         "    X < 10\n"
         "}\n",
@@ -3754,10 +3729,9 @@ spec(Config) when is_list(Config) ->
         "    another_field => atom()\n"
         "}) -> supervisor:child_spec().\n",
         "-spec child_spec(#{\n"
-        "    name =>\n"
-        "        {local, Name :: atom()}\n"
-        "        | {global, GlobalName :: any()}\n"
-        "        | {via, Module :: atom(), ViaName :: any()},\n"
+        "    name => {local, Name :: atom()}\n"
+        "    | {global, GlobalName :: any()}\n"
+        "    | {via, Module :: atom(), ViaName :: any()},\n"
         "    another_field => atom()\n"
         "}) -> supervisor:child_spec().\n"
     ),

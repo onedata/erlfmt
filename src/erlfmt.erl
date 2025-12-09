@@ -592,6 +592,9 @@ ignore_state([Line | Lines], FileName, Loc, Rest, Acc0) ->
                 false;
             "erlfmt:ignore-end" ++ R when ?IS_IGNORE_REASON(R) ->
                 throw({error, {FileName, Loc, ?MODULE, {invalid_ignore, 'end', Acc0}}});
+            % Onedata-style -.-
+            "-" ++ R when ?IS_IGNORE_REASON(R), Acc0 =:= false ->
+                ignore;
             _ ->
                 Acc0
         end,

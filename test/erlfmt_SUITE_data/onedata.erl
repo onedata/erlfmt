@@ -23,7 +23,7 @@
 -type aggregator() :: sum | max | min | last | first | avg.
 -export_type([aggregator/0]).
 
--define(WEEK_RESOLUTION, 648000).  % 7 days
+-define(WEEK_RESOLUTION, 648000).  %- 7 days
 
 %% erlfmt:ignore
 -define(MONTH_RESOLUTION, 2592000).  % 30 days
